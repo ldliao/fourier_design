@@ -1,0 +1,218 @@
+---
+title: "Playing with FOURIER"
+output: html_notebook
+---
+```{r}
+rm(list=ls())
+options(stringsAsFactors = FALSE)
+```
+
+```{r}
+library(RCTdesign)
+```
+
+```{r}
+#***** calculate the number of events using the standard formula:
+
+(1.96 + qnorm(0.9))^2/log(0.85)^2*4
+
+```
+
+```{r}
+#** Using RCT design to get the same thing:
+
+
+#**************** suppose that they actually want 1630 events in a fixed-samples study:
+(dsgn <- seqDesign(prob.model="hazard",test.type="less",alt.hypo=0.85,power=0.9))
+
+```
+```{r}
+(dsgnIA.fda <- seqDesign(prob.model="hazard",test.type="less",sample.size= c(330,1630),alt.hyp=0.85,power="calculate"))
+
+seqPlotPower(dsgnIA.fda,reference = fixed)
+
+dsgnIAnull.fda <- update(dsgnIA.fda,early.stop = 'null')
+dsgnIAalt.fda <- update(dsgnIA.fda,early.stop = 'alt') 
+dsgnIAasym.5fda <- update(dsgnIA.fda,P=c(.5,.5)) 
+dsgnIAasym.7fda <- update(dsgnIA.fda,P=c(.7,.7)) 
+
+
+#the P parameter is corresponding to null, alt 
+#looking at the power - extra chances to stop early protecting
+
+seqInference(dsgnIAnull.fda)
+
+seqPlotBoundary(dsgnIA.fda)
+seqPlotPower(dsgnIAalt.fda,dsgnIAasym.5fda,dsgnIAasym.7fda) #lost power
+
+seqPlotBoundary(dsgnIAnull.fda)
+seqPlotBoundary(dsgnIAalt.fda)
+
+```
+
+```{r}
+(fixed <- seqDesign(prob.model="hazard",test.type="less",sample.size=1630,alt.hyp=0.85,power="calculate"))
+seqInference(fixed)
+```
+
+this mimics the specific trial using 1630 as sample size
+power is higher than the estimated sample size above: .9067
+
+
+```{r}
+#**************** designs with interim analyses:
+(dsgnIA.5 <- update(fixed,nbr.analyses=5))
+
+(dsgnIA.4 <- update(fixed,nbr.analyses=4))
+(dsgnIA.3 <- update(fixed,nbr.analyses=3))
+(dsgnIA.2 <- update(fixed,nbr.analyses=2))
+```
+```{r}
+seqPlotBoundary(dsgnIA.fda,dsgnIAasym.5fda,dsgnIAasym.7fda)
+```
+
+```{r}
+seqPlotBoundary(dsgnIA.4,dsgnIA.3,dsgnIA.2)
+```
+
+Bottom indicates efficacy works and top meaning doesn't work.
+
+```{r}
+seqPlotPower(dsgnIA.5,dsgnIA.4,dsgnIA.3,dsgnIA.2,reference=fixed)
+abline(v=.85)
+```
+
+```{r}
+seqPlotASN(dsgnIA.4,dsgnIA.3,dsgnIA.2,reference=fixed)
+```
+
+```{r}
+seqPlotStopProb(dsgnIA.4)
+
+```
+
+
+```{r}
+(zz3 <- seqOC(dsgnIA.3,theta=0.85))
+#names(zz3)
+tmp3 <- t(rbind(zz3$lower.stop.prob,zz3$upper.stop.prob,zz3$stop.prob))
+apply(tmp3,2,sum)
+sum(sampleSize(dsgnIA.3)*tmp3[,3])
+#[1] 1255.7
+```
+
+```{r}
+(zz5 <- seqOC(dsgnIA.5,theta=0.85))
+
+(zz4 <- seqOC(dsgnIA.4,theta=0.85))
+# ASN = 1191
+(zz3 <- seqOC(dsgnIA.3,theta=0.85))
+# ASN = 1258
+(zz2 <- seqOC(dsgnIA.2,theta=0.85))
+# ASN = 1362
+```
+
+
+```{r}
+(dsgnIA2.4 <- update(dsgnIA.4,test.type="two.sided")) 
+(dsgnIAnull.4 <- update(dsgnIA.4,early.stop="null")) #highest power power = 0.9022
+(dsgnIAalt.4 <- update(dsgnIA.4,early.stop="alt")) #power = .9006
+(dsgnIAasym.4 <- update(dsgnIA.4,P=c(1,0.5))) #power = .8654
+```
+
+```{r}
+(zz2 <- seqOC(dsgnIA.2, theta = 0.85))
+# ASN = 1362
+(zz3 <- seqOC(dsgnIA.3, theta = 0.85))
+# ASN = 1256
+(zz4 <- seqOC(dsgnIA.4, theta = 0.85))
+# ASN = 1191
+(zz4_twosided <- seqOC(dsgnIA2.4,theta=0.85))
+# ASN = 1223
+(zz4_null <- seqOC(dsgnIAnull.4,theta=0.85))
+# ASN = 1610
+(zz4_alt <- seqOC(dsgnIAalt.4,theta=0.85))
+# ASN = 1223
+(zz4_asym <- seqOC(dsgnIAasym.4,theta=0.85)) # Lowest ASN
+# ASN = 1112
+
+#Upper is chances not work
+#stopping early for benefit (HR is truly .85) is only .2% chance of stopping early
+# .7 balance 10% is important
+# ASN easier to stop earlier
+```
+
+```{r}
+(dsgnIA2.3 <- update(dsgnIA.3,test.type="two.sided")) 
+(dsgnIAnull.3 <- update(dsgnIA.3,early.stop="null")) #highest power power = 0.9022
+(dsgnIAalt.3 <- update(dsgnIA.3,early.stop="alt")) #power = .9006
+(dsgnIAasym.3 <- update(dsgnIA.3,P=c(1,0.5))) #power = .8654
+(zz3_twosided <- seqOC(dsgnIA2.3,theta=0.85))
+# ASN = 1223
+(zz3_null <- seqOC(dsgnIAnull.3,theta=0.85))
+# ASN = 1610
+(zz3_alt <- seqOC(dsgnIAalt.3,theta=0.85))
+# ASN = 1223
+(zz3_asym <- seqOC(dsgnIAasym.3,theta=0.85)) # Lowest ASN
+# ASN = 1112
+```
+
+```{r}
+par(mfrow = c(1,2))
+seqPlotBoundary(dsgnIAnull.4)
+seqPlotBoundary(dsgnIAalt.4)
+```
+
+```{r}
+seqPlotPower(dsgnIA.4,dsgnIAnull.4,reference=fixed)
+```
+
+```{r}
+seqPlotASN(dsgnIA.4,dsgnIAnull.4,dsgnIAalt.4)
+```
+
+```{r}
+
+#seqPlotBoundary(dsgnIA.4,dsgnIAasym.47)
+
+
+(dsgnIAasym.4 <- update(dsgnIA.4,P=c(1,0.5))) #power = .8654
+(dsgnIAasym.47 <- update(dsgnIA.4,P=c(1,0.75))) #power = .8654
+seqOC(dsgnIAasym.47,theta = 0.85)
+seqInference(fixed)
+seqInference(dsgnIAasym.47)
+pdf()
+seqPlotInference(dsgnIAasym.47)
+plotseqInference(dsgnIAasym.47)
+```
+
+
+
+
+
+
+Which designs are most powerful? stopping at null with 4 interim analysis
+
+seqDesign(prob.model = "hazard", alt.hypothesis = 0.85, nbr.analyses = 4, 
+    sample.size = 1630, test.type = "less", power = "calculate", 
+    early.stopping = "null")
+
+Which designs have the smallest expected sample size (ASN)? 
+
+seqDesign(prob.model = "hazard", alt.hypothesis = 0.85, nbr.analyses = 4, 
+    sample.size = 1630, test.type = "less", power = "calculate", 
+    P = c(1, 0.5))
+
+Which designs would tend to stop early?
+
+4 interim analyses are the ones that tend to stop early
+
+seqDesign(prob.model = "hazard", alt.hypothesis = 0.85, nbr.analyses = 4, 
+    sample.size = 1630, test.type = "less", power = "calculate", 
+    early.stopping = "null")
+    
+and 
+
+seqDesign(prob.model = "hazard", alt.hypothesis = 0.85, nbr.analyses = 4, 
+    sample.size = 1630, test.type = "less", power = "calculate", 
+    early.stopping = "alt")

@@ -1,0 +1,38 @@
+---
+title: "Project"
+output: html_notebook
+---
+
+```{r}
+library(RCTdesign)
+
+#testing
+tmp <- seqDesign()
+
+#number of events:
+(1.96 + qnorm(.9))^2/log(.85)^2*4
+
+#fixed-sample design for FOURIER
+dsgn <- seqDesign(alt.hypothesis = log(.85), power = 0.9, variance = 1)
+```
+
+This assumes normal approximation
+
+```{r}
+(dsgn <- seqDesign(prob.model = "hazard", alt.hypothesis =(0.85), power=.9))
+```
+
+```{r}
+names(dsgn)
+```
+
+```{r}
+#adding interim analyses:
+dsgnIA <- update(dsgn,nbr.analyses = 4)
+seqPlotBoundary(dsgnIA)
+seqPlotPower(dsgnIA)
+seqPlotStopProb(dsgnIA)
+```
+
+what is the most efficient design?
+
