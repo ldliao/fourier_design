@@ -1,2 +1,3 @@
 # fourier_design
-Project from summer in biostatistics at Colorado Public School of Health working with Professor John Kittelson.
+from summer 2017 in biostatistics at Colorado Public School of Health working with Professor John Kittelson.
+**Project: Interim Decisions with a Surrogate Endpoint versus Interim Analysis of the Primary Trial Endpoint**
